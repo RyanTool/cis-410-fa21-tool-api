@@ -82,8 +82,6 @@ app.post("/attendees/login", async (req, res) => {
 
   let user = result[0];
 
-  console.log(result[0]);
-
   if (!bcrypt.compareSync(password, user.Password)) {
     return res.status(401).send("Invalid user credentials");
   }
@@ -92,10 +90,6 @@ app.post("/attendees/login", async (req, res) => {
   let token = jwt.sign({ pk: user.AttendeePK }, toolConfig.JWT, {
     expiresIn: "60 minutes",
   });
-
-  console.log(token);
-
-  console.log("got here");
   //5. Save token in database and send response back
 
   let setTokenQuery = `UPDATE Attendee SET Token = '${token}' WHERE AttendeePK = ${user.AttendeePK}`;
@@ -167,10 +161,40 @@ app.post("/attendees/logout", auth, (req, res) => {
     });
 });
 
-app.post("/events", auth, async (req, res) => {
-  //FIXME
+app.post("/entry", auth, async (req, res) => {
+  try {
+    let EventFK = req.body.EventFK;
+    let EntryTime = req.body.EntryTime;
+
+    if (!EventFK || !EntryTime) {
+      return res.status(400).send("bad request");
+    }
+
+    let insertQuery = `INSERT INTO Entry(EntryTime, AttendeeFK, EventFK) OUTPUT inserted.EntryTime, inserted.AttendeeFK, inserted.EventFK VALUES('${EntryTime}','${req.contact.AttendeePK}','${EventFK}')`;
+
+    let insertedEntry = await db.executeQuery(insertQuery);
+
+    res.status(201).send(insertedEntry[0]);
+  } catch (err) {
+    console.log("error in POST /entries", err);
+    res.status(500).send();
+  }
 });
 
-app.get("/events/me", auth, async (req, res) => {
-  //FIXME
+app.post("/entry/me", auth, async (req, res) => {
+  try {
+    let AttendeePK = req.contact.AttendeePK;
+
+    let myQuery = `SELECT * FROM Entry WHERE AttendeeFK = ${AttendeePK}`;
+    let returnedEntries = await db.executeQuery(myQuery);
+
+    if (!returnedEntries[0]) {
+      return res.status(400).send("no entires found for user");
+    } else {
+      return res.status(200).send(returnedEntries);
+    }
+  } catch (err) {
+    console.log("error in POST /entry/me", err);
+    res.status(500).send();
+  }
 });

@@ -10,8 +10,6 @@ const auth = async (req, res, next) => {
 
     let decoded = jwt.verify(myToken, toolConfig.JWT);
 
-    console.log("attendeePK: ", decoded.pk);
-
     let attendeePK = decoded.pk;
 
     //2. Compare token with database
