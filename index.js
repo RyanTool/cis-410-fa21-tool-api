@@ -144,8 +144,15 @@ app.post("/attendees", async (req, res) => {
     });
 });
 
-app.get("/attendees/me", auth, (req, res) => {
-  res.send(req.contact);
+app.get("/attendees/me", auth, async (req, res) => {
+  let myQuery = `SELECT * FROM Entry WHERE AttendeeFK = ${req.contact.AttendeePK}`;
+  try {
+    let results = await db.executeQuery(myQuery);
+    res.status(200).send(results);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send();
+  }
 });
 
 app.post("/attendees/logout", auth, (req, res) => {
