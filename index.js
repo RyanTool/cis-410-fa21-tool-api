@@ -188,7 +188,7 @@ app.post("/entry", auth, async (req, res) => {
   }
 });
 
-app.post("/entry/me", auth, async (req, res) => {
+app.get("/entry/me", auth, async (req, res) => {
   try {
     let AttendeePK = req.contact.AttendeePK;
 
